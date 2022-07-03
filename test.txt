@@ -1,0 +1,91 @@
+Sub get_cell_value()
+'Application.ScreenUpdating = False
+'Set Source_workbook = Workbooks.Open("P:\VBA\sheet1.xlsx")
+'Workbooks("sheet1").Worksheets("Sheet1").Range("A3:E8").Copy _
+'Workbooks("Report").Worksheets("Sheet1").Range("A3:E8")
+
+'Source_workbook.Close SaveChanges:=False
+'Application.ScreenUpdating = True
+'MsgBox Workbooks("sheet1").Worksheets("Sheet1").UsedRange.Rows.Count
+End Sub
+Public Function insert_s_no()
+    Dim slot_ws As Worksheet
+    Set slot_ws = ThisWorkbook.Sheets(1)
+    Dim row As Integer
+    row = 4
+    
+    Do While True
+        If Len(slot_ws.Range("B" + CStr(row))) = 0 Then
+            Exit Do
+        End If
+        slot_ws.Range("A" + CStr(row)) = row - 3
+        row = row + 1
+    Loop
+    
+End Function
+
+Public Function insert_entry(new_emp_id As String, new_submit_count As Integer, new_answer_count As Integer, new_problem1 As Double)
+    Dim currWorksheet As Worksheet
+    Set currWorksheet = ThisWorkbook.Sheets(1)
+    Dim emp_id As String
+    Dim row As Integer
+    row = 4
+    emp_id = currWorksheet.Range("B" + CStr(row))
+    Do While Len(emp_id) > 0
+        If new_emp_id = currWorksheet.Range("B" + CStr(row)) Then
+            If CDbl(new_problem1) > CDbl(currWorksheet.Range("E" + CStr(row))) Then
+                currWorksheet.Range("C" + CStr(row)) = new_submit_count
+                currWorksheet.Range("D" + CStr(row)) = new_answer_count
+                currWorksheet.Range("E" + CStr(row)) = new_problem1
+            End If
+            Exit Function
+        End If
+        
+        row = row + 1
+        emp_id = currWorksheet.Range("B" + CStr(row))
+    Loop
+    currWorksheet.Range("B" + CStr(row)) = new_emp_id
+    currWorksheet.Range("C" + CStr(row)) = new_submit_count
+    currWorksheet.Range("D" + CStr(row)) = new_answer_count
+    currWorksheet.Range("E" + CStr(row)) = new_problem1
+End Function
+
+Public Function Process_File(slotFile As String)
+    Application.ScreenUpdating = False
+    Dim slot_ws As Worksheet
+    Set slot_ws = Workbooks.Open(slotFile).Sheets(1)
+    Dim row As Integer
+    row = 4
+    
+    Do While True
+        If Len(slot_ws.Range("B" + CStr(row))) = 0 Then
+            Exit Do
+        End If
+        insert_entry slot_ws.Range("B" + CStr(row)), slot_ws.Range("C" + CStr(row)), slot_ws.Range("D" + CStr(row)), slot_ws.Range("E" + CStr(row))
+        row = row + 1
+    Loop
+    
+    slot_ws.Parent.Close SaveChanges:=False
+    Application.ScreenUpdating = True
+End Function
+
+Public Function SortData()
+    'ThisWorkbook.Sheets(1).Sort.SortFields.Clear
+    row = ThisWorkbook.Sheets(1).UsedRange.SpecialCells(xlCellTypeLastCell).row
+    MsgBox row
+    Range("B4:E" + CStr(row)).Sort Key1:=Range("B4"), Order1:=xlAscending, Header:=xlNo
+End Function
+
+Sub MergeSlotResults()
+   
+    Dim currWorkingDirectory As String
+    currWorkingDirectory = ThisWorkbook.Path
+    
+    Process_File currWorkingDirectory + "\slot1.xlsx"
+    Process_File currWorkingDirectory + "\slot2.xlsx"
+    ThisWorkbook.Save
+    SortData
+    ThisWorkbook.Save
+    insert_s_no
+    ThisWorkbook.Save
+End Sub
